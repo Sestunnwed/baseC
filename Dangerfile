@@ -42,3 +42,17 @@ warn("Please add labels to this PR.") if github.pr_labels.empty?
 
 # Post the summary as a comment on the PR
 markdown(summary)
+
+# 获取 PR 中修改的 Python 文件
+python_files = (git.modified_files + git.added_files).select { |file| file.end_with?(".py") }
+
+unless python_files.empty?
+  flake8_result = `flake8 #{python_files.join(" ")}`
+  flake8_exit_status = $?.exitstatus
+
+  if flake8_exit_status != 0
+    fail("⚠️ Flake8 code issues found:\n```\n#{flake8_result}\n```")
+  else
+    message("✅ No Flake8 issues found!")
+  end
+end

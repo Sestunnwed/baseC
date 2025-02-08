@@ -4,8 +4,8 @@ on:
     types: [opened, synchronize]
 
 permissions:
-  pull-requests: write  # 允许 Danger 在 PR 上发表评论
-  contents: read  # 允许读取代码文件
+  pull-requests: write
+  contents: read
 
 jobs:
   danger:
@@ -21,6 +21,14 @@ jobs:
 
       - name: Install Danger
         run: gem install danger
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: pip install flake8
 
       - name: Run Danger
         env:
