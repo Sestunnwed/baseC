@@ -3,15 +3,16 @@ modified_files = git.modified_files
 added_files = git.added_files
 deleted_files = git.deleted_files
 
-# 统计代码变更行数
-insertions = git.lines_of_code[:insertions]
-deletions = git.lines_of_code[:deletions]
+# 统计代码变更行数（修正索引错误）
+insertions, deletions = git.lines_of_code if git.lines_of_code.is_a?(Array)
+insertions ||= 0
+deletions ||= 0
 
-# 获取 PR 提交信息
+# 获取 PR 提交信息（避免 nil）
 commit_messages = github.commits.map(&:message).join("\n- ")
 
-# 读取 PR 说明（如果为空，则生成默认摘要）
-pr_body = github.pr_body.strip
+# 读取 PR 说明（避免 nil）
+pr_body = github.pr_body.to_s.strip
 pr_body = "ℹ️ 此 PR 没有描述，自动生成摘要：" if pr_body.empty?
 
 # **分析 PR 类型**
@@ -33,7 +34,7 @@ end
 # **分析涉及的模块**
 module_summary = []
 module_mapping = {
-  "./github/workflows" => "📃 github模块",
+  "./github/workflows" => "📃 GitHub 模块",
   "src/network" => "🌐 网络模块",
   "src/db" => "🗄️ 数据库模块",
   "src/ui" => "🎨 前端 UI",
@@ -75,3 +76,4 @@ MD
 
 # **在 PR 页面发表评论**
 message(summary)
+
