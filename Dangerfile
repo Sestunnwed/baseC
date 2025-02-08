@@ -4,8 +4,6 @@ added_files = git.added_files
 deleted_files = git.deleted_files
 
 # 统计代码变更行数
-insertions = git.lines_of_code[:insertions]
-deletions = git.lines_of_code[:deletions]
 total_lines_changed = git.lines_of_code
 
 
