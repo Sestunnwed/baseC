@@ -1,33 +1,13 @@
-# 获取 Git 变更信息
-modified_files = git.modified_files
-added_files = git.added_files
+# 获取 PR 修改的文件
+modified_files = git.modified_files + git.added_files
 deleted_files = git.deleted_files
 
-# 统计代码变更行数
+# 计算 PR 修改的行数
 total_lines_changed = git.lines_of_code
 
-
-# 获取 PR 元数据
-pr_title = github.pull_request.title  # 获取 PR 标题
-pr_labels = github.pull_request.labels.map(&:name).join(", ")  # 获取 PR 标签
-pr_reviewers = github.pull_request.requested_reviewers.map { |r| r["login"] }.join(", ")  # 获取请求的 reviewers
-
-# 获取提交信息
-commit_messages = github.commits.map(&:message).join("\n- ")
-
-# 读取 PR 描述（如果为空，则生成默认摘要）
-pr_body = github.pr_body.strip
-pr_body = "ℹ️ 此 PR 没有描述，自动生成摘要：" if pr_body.empty?
-
-# **分析 PR 类型**
-summary_text = []
-if added_files.any?
-  summary_text << "📂 新增了 #{added_files.count} 个文件，可能是新功能或配置更新。"
-end
-
 # **分析涉及的模块**
-module_summary = []
 module_mapping = {
+  "./github/workflows" => "📃 GitHub 模块",
   "src/network" => "🌐 网络模块",
   "src/db" => "🗄️ 数据库模块",
   "src/ui" => "🎨 前端 UI",
@@ -37,43 +17,51 @@ module_mapping = {
   "config" => "⚙️ 配置文件",
   "tests" => "🧪 测试代码",
   "scripts" => "🔧 脚本工具",
-  "docs" => "📖 文档",
-  "github" => "🔑 GitHub 元数据"  # GitHub 元数据模块
+  "docs" => "📖 文档"
 }
-modified_files.each do |file|
-  module_mapping.each do |path, module_name|
-    if file.start_with?(path)
-      module_summary << module_name unless module_summary.include?(module_name)
-    end
-  end
+
+# 找出受影响的模块
+affected_modules = modified_files
+  .map { |file| module_mapping.find { |path, _| file.start_with?(path) } }
+  .compact
+  .map(&:last)
+  .uniq
+
+# 生成 PR 摘要
+summary = "### 🤖 PR 自动摘要\n"
+summary += "- 影响的文件数量：#{modified_files.count + deleted_files.count}\n"
+summary += "- 新增文件：#{git.added_files.count}\n"
+summary += "- 修改文件：#{git.modified_files.count}\n"
+summary += "- 删除文件：#{git.deleted_files.count}\n"
+summary += "- 代码变更总行数：#{total_lines_changed}\n"
+
+# 列出主要修改的文件
+unless modified_files.empty?
+  summary += "\n### 📝 主要修改文件：\n"
+  modified_files.first(5).each { |file| summary += "- `#{file}`\n" }
 end
 
-# **生成 PR 摘要**
-summary = <<~MD
-  ### 🤖 PR 自动总结
-  📌 **PR 标题**：
-  - #{pr_title}
+# 列出主要删除的文件
+unless deleted_files.empty?
+  summary += "\n### ❌ 主要删除文件：\n"
+  deleted_files.first(5).each { |file| summary += "- `#{file}`\n" }
+end
 
-  📌 **变更类型**：
-  - #{summary_text.join("\n- ")}
+# 列出受影响的模块
+unless affected_modules.empty?
+  summary += "\n### 📌 影响的模块：\n"
+  affected_modules.each { |mod| summary += "- #{mod}\n" }
+end
 
-  📊 **代码变更统计**：
-  - 影响文件数量：#{modified_files.count + added_files.count + deleted_files.count}
-  - 代码变更行数：#{total_lines_changed}
+# 检查 PR 描述是否填写
+if github.pr_body.nil? || github.pr_body.strip.empty?
+  warn("⚠️ PR 描述为空，请补充详细的修改说明。")
+end
 
-  🔍 **涉及的模块**：
-  #{module_summary.any? ? module_summary.join(", ") : "⚠️ 无法确定，可能涉及多个模块"}
+# 检测是否直接向 master 分支提交
+if github.branch == "master"
+  warn("🚨 **警告：PR 直接提交到 master 分支，请确认是否符合流程！**")
+end
 
-  🔑 **PR 元数据**：
-  - **标签**：#{pr_labels.empty? ? "无" : pr_labels}
-  - **请求的 Reviewers**：#{pr_reviewers.empty? ? "无" : pr_reviewers}
-
-  ✏️ **主要修改的文件**：
-  #{modified_files.first(5).map { |file| "  - `#{file}`" }.join("\n")}
-
-  📝 **最近的 Commit 信息**：
-  - #{commit_messages}
-MD
-
-# **在 PR 页面发表评论**
-message(summary)
+# 在 PR 页面评论这个摘要
+markdown(summary)
