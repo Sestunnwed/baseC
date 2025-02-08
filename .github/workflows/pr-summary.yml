@@ -1,0 +1,14 @@
+name: PR Summary
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate PR summary
+        uses: microsoft/PR-Summarizer@main
