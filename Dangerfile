@@ -3,8 +3,7 @@ modified_files = git.modified_files + git.added_files
 deleted_files = git.deleted_files
 
 # 计算 PR 修改的行数
-added_lines = git.lines_of_code.added
-removed_lines = git.lines_of_code.deleted
+total_lines_changed = git.lines_of_code
 
 # 生成 PR 摘要
 summary = "### 🤖 PR 自动摘要\n"
@@ -12,7 +11,7 @@ summary += "- 影响的文件数量：#{modified_files.count + deleted_files.cou
 summary += "- 新增文件：#{git.added_files.count}\n"
 summary += "- 修改文件：#{git.modified_files.count}\n"
 summary += "- 删除文件：#{git.deleted_files.count}\n"
-summary += "- 代码变更行数：+#{added_lines} / -#{removed_lines}\n"
+summary += "- 代码变更总行数：#{total_lines_changed}\n"
 summary += "- 主要修改文件：\n"
 
 modified_files.first(5).each do |file|
