@@ -1,41 +1,44 @@
-# 获取 PR 的修改文件
+# Get the modified, added, and deleted files in the PR
 modified_files = git.modified_files + git.added_files
 deleted_files = git.deleted_files
 
-# 计算 PR 修改的行数
+# Calculate total lines changed in the PR
 total_lines_changed = git.lines_of_code
 
-# 生成 PR 摘要
-summary = "### 🤖 PR 自动摘要\n"
-summary += "- 影响的文件数量：#{modified_files.count + deleted_files.count}\n"
-summary += "- 新增文件：#{git.added_files.count}\n"
-summary += "- 修改文件：#{git.modified_files.count}\n"
-summary += "- 删除文件：#{git.deleted_files.count}\n"
-summary += "- 代码变更总行数：#{total_lines_changed}\n"
-summary += "- 主要修改文件：\n"
+# Generate PR summary
+summary = "### 🤖 PR Auto Summary\n"
+summary += "🚀 **Total affected files**: #{modified_files.count + deleted_files.count}\n"
+summary += "🆕 **New files**: #{git.added_files.count}\n"
+summary += "✏️ **Modified files**: #{git.modified_files.count}\n"
+summary += "🗑️ **Deleted files**: #{git.deleted_files.count}\n"
+summary += "📊 **Total lines changed**: #{total_lines_changed}\n"
+summary += "📂 **Key modified files**:\n"
 
 modified_files.first(5).each do |file|
   summary += "  - `#{file}`\n"
 end
 
-# 如果有删除的文件，也展示前 5 个
 unless deleted_files.empty?
-  summary += "- 主要删除文件：\n"
+  summary += "🗂️ **Key deleted files**:\n"
   deleted_files.first(5).each do |file|
     summary += "  - `#{file}`\n"
   end
 end
 
-# 自动检查 PR 描述是否填写完整
-if github.pr_body.nil? || github.pr_body.strip.empty?
-  warn("PR 描述为空，请补充详细的修改说明。")
-end
+# Warn if PR description is empty
+warn("PR description is empty. Please provide a detailed explanation of the changes.") if github.pr_body.nil? || github.pr_body.strip.empty?
 
+source_branch = github.branch_for_head
 target_branch = github.branch_for_base
-# 如果目标分支是 main 或 master，则发出警告
-if target_branch == "main" || target_branch == "master"
-  warn("PR 目标分支为 `#{target_branch}`，请确保此 PR 符合合并策略！")
-end
 
-# 在 PR 页面评论这个摘要
+# Warn if PR target branch is main/master and source is not dev/develop
+warn("PR target branch is `#{target_branch}`. Ensure this PR follows the merge strategy!") if (target_branch == "main" || target_branch == "master") && !(source_branch == "dev" || source_branch == "develop")
+
+# Warn if PR is still a work in progress
+warn("PR is marked as Work in Progress (WIP).") if github.pr_title.include? "WIP"
+
+# Warn if PR has no labels
+warn("Please add labels to this PR.") if github.pr_labels.empty?
+
+# Post the summary as a comment on the PR
 markdown(summary)
