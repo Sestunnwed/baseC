@@ -33,7 +33,7 @@ end
 # **分析涉及的模块**
 module_summary = []
 module_mapping = {
-  "./github/workflows" => "📃 github模块"
+  "./github/workflows" => "📃 github模块",
   "src/network" => "🌐 网络模块",
   "src/db" => "🗄️ 数据库模块",
   "src/ui" => "🎨 前端 UI",
