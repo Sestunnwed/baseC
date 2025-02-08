@@ -3,8 +3,8 @@ modified_files = git.modified_files + git.added_files
 deleted_files = git.deleted_files
 
 # 计算 PR 修改的行数
-added_lines = git.lines_of_code[:added]
-removed_lines = git.lines_of_code[:removed]
+added_lines = git.lines_of_code.added
+removed_lines = git.lines_of_code.deleted
 
 # 生成 PR 摘要
 summary = "### 🤖 PR 自动摘要\n"
