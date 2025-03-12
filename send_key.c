@@ -39,5 +39,4 @@ int main() {
     // 清理资源
     XCloseDisplay(display);
 
-    return 0;
 }
