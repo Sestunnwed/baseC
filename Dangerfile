@@ -51,8 +51,17 @@ unless python_files.empty?
   flake8_exit_status = $?.exitstatus
 
   if flake8_exit_status != 0
-    fail("Flake8 code issues found:\n```\n#{flake8_result}\n```")
+    fail("❌ Flake8 code issues found:\n```\n#{flake8_result}\n```")
   else
-    message("No Flake8 issues found!")
+    message("✅ No Flake8 issues found!")
+  end
+
+  pylint_result = `pylint --output-format=parseable #{python_files.join(" ")}`
+  pylint_exit_status = $?.exitstatus
+
+  if pylint_exit_status != 0
+    fail("❌ Pylint issues found:\n```\n#{pylint_result}\n```")
+  else
+    message("✅ No Pylint issues found!")
   end
 end
